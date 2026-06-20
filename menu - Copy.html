@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dakshin Delight</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:#f8f5ef;
+padding:15px;
+max-width:700px;
+margin:auto;
+}
+
+.header{
+background:linear-gradient(135deg,#ff6b35,#ff9f43);
+color:white;
+padding:25px;
+border-radius:18px;
+text-align:center;
+margin-bottom:15px;
+}
+
+.header h1{
+font-size:32px;
+margin-bottom:5px;
+}
+
+.customer-box{
+background:white;
+padding:15px;
+border-radius:12px;
+margin-bottom:15px;
+box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+.customer-box input,
+#search{
+width:100%;
+padding:12px;
+margin:6px 0;
+border:1px solid #ddd;
+border-radius:8px;
+}
+
+.category{
+font-size:22px;
+font-weight:bold;
+color:#ff6b35;
+margin:20px 0 10px;
+}
+
+.item{
+background:white;
+padding:15px;
+border-radius:12px;
+margin-bottom:10px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+.item-name{
+font-weight:bold;
+}
+
+.price{
+color:#ff6b35;
+font-weight:bold;
+margin-top:4px;
+}
+
+.controls{
+display:flex;
+align-items:center;
+gap:10px;
+}
+
+.btn{
+width:32px;
+height:32px;
+border:none;
+border-radius:50%;
+background:#ff6b35;
+color:white;
+font-size:18px;
+cursor:pointer;
+}
+
+.qty{
+font-weight:bold;
+min-width:20px;
+text-align:center;
+}
+
+.cart{
+position:sticky;
+bottom:0;
+background:white;
+padding:15px;
+margin-top:20px;
+border-radius:15px;
+box-shadow:0 0 15px rgba(0,0,0,.15);
+}
+
+.total{
+font-size:22px;
+font-weight:bold;
+margin-bottom:10px;
+}
+
+.order-btn{
+width:100%;
+padding:15px;
+border:none;
+background:#25D366;
+color:white;
+font-size:18px;
+font-weight:bold;
+border-radius:10px;
+cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+<h1>🍽️ Dakshin Delight</h1>
+<p>Fresh • Hygienic • Delicious</p>
+<p>South Indian Special Menu</p>
+</div>
+
+<div class="customer-box">
+<input type="text" id="customerName" placeholder="Customer Name">
+<input type="tel" id="customerMobile" placeholder="Mobile Number">
+</div>
+
+<input type="text" id="search" placeholder="Search Food..." onkeyup="searchMenu()">
+
+<div id="menu"></div>
+
+<div class="cart">
+<div class="total">Total: ₹<span id="total">0</span></div>
+<button class="order-btn" onclick="sendOrder()">Order on WhatsApp</button>
+</div>
+
+<script>
+
+const phone="919602185675";
+
+const menuData=[
+{category:"DOSA",name:"Plain Dosa",price:50},
+{category:"DOSA",name:"Masala Dosa",price:60},
+{category:"DOSA",name:"Onion Dosa",price:60},
+{category:"DOSA",name:"Butter Dosa",price:80},
+{category:"DOSA",name:"Paneer Dosa",price:80},
+{category:"DOSA",name:"Cheese Dosa",price:80},
+{category:"DOSA",name:"Paneer Butter Dosa",price:100},
+{category:"DOSA",name:"Cheese Butter Dosa",price:100},
+{category:"DOSA",name:"Cheese Paneer Butter Dosa",price:150},
+
+{category:"UTTAPAM",name:"Butter Uttapam",price:100},
+{category:"UTTAPAM",name:"Cheese Uttapam",price:100},
+{category:"UTTAPAM",name:"Paneer Uttapam",price:100},
+{category:"UTTAPAM",name:"Paneer Butter Uttapam",price:120},
+{category:"UTTAPAM",name:"Cheese Butter Uttapam",price:120},
+{category:"UTTAPAM",name:"Cheese Paneer Butter Uttapam",price:150},
+
+{category:"OTHERS",name:"Idli Sambar",price:50},
+{category:"OTHERS",name:"Fry Idli",price:80},
+{category:"OTHERS",name:"Medu Vada",price:50},
+{category:"OTHERS",name:"Upma",price:50}
+];
+
+const quantities={};
+
+function renderMenu(filter=""){
+
+let html="";
+let currentCategory="";
+
+menuData.forEach((item,index)=>{
+
+if(!item.name.toLowerCase().includes(filter.toLowerCase()))
+return;
+
+if(currentCategory!==item.category){
+currentCategory=item.category;
+html+=`<div class="category">${item.category}</div>`;
+}
+
+if(quantities[index]===undefined) quantities[index]=0;
+
+html+=`
+<div class="item">
+<div>
+<div class="item-name">${item.name}</div>
+<div class="price">₹${item.price}</div>
+</div>
+
+<div class="controls">
+<button class="btn" onclick="changeQty(${index},-1)">-</button>
+<span class="qty" id="qty${index}">${quantities[index]}</span>
+<button class="btn" onclick="changeQty(${index},1)">+</button>
+</div>
+</div>
+`;
+});
+
+document.getElementById("menu").innerHTML=html;
+}
+
+function searchMenu(){
+renderMenu(document.getElementById("search").value);
+}
+
+function changeQty(index,val){
+
+quantities[index]+=val;
+
+if(quantities[index]<0)
+quantities[index]=0;
+
+renderMenu(document.getElementById("search").value);
+
+updateTotal();
+}
+
+function updateTotal(){
+
+let total=0;
+
+menuData.forEach((item,index)=>{
+total+=item.price*quantities[index];
+});
+
+document.getElementById("total").innerText=total;
+}
+
+function sendOrder(){
+
+let name=document.getElementById("customerName").value.trim();
+let mobile=document.getElementById("customerMobile").value.trim();
+
+if(name===""){
+alert("Please Enter Customer Name");
+return;
+}
+
+let msg=`Hello Dakshin Delight
+
+Customer Name: ${name}
+Mobile: ${mobile}
+
+Order Details:
+
+`;
+
+let total=0;
+let hasOrder=false;
+
+menuData.forEach((item,index)=>{
+
+if(quantities[index]>0){
+
+let amount=item.price*quantities[index];
+
+msg+=`${quantities[index]} x ${item.name} = ₹${amount}\n`;
+
+total+=amount;
+hasOrder=true;
+}
+
+});
+
+if(!hasOrder){
+alert("Please Select Items");
+return;
+}
+
+msg+=`\nTotal = ₹${total}`;
+
+window.open(
+`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`,
+"_blank"
+);
+}
+
+renderMenu();
+</script>
+
+</body>
+</html>
+```
